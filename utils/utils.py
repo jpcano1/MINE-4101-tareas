@@ -58,7 +58,7 @@ def download_content(url, filename, chnksz=1000, zip=False):
         extract_file(filename)
     return
 
-def download_file_from_google_drive(id_, destination, size=None,
+def download_file_from_google_drive(id_, filename, size=None,
                                     chnksz=1000, zip=False):
     def get_confirm_token(response):
         for key, value in response.cookies.items():
@@ -66,9 +66,9 @@ def download_file_from_google_drive(id_, destination, size=None,
                 return value
         return None
 
-    def save_response_content(response, destination, size=None,
+    def save_response_content(response, filename, size=None,
                               chnksz=1000):
-        with open(destination, "wb") as f:
+        with open(filename, "wb") as f:
             gen = response.iter_content(chunk_size=chnksz)
             for chunk in tqdm(gen, total=size, unit="KB"):
                 if chunk: # filter out keep-alive new chunks
@@ -78,16 +78,16 @@ def download_file_from_google_drive(id_, destination, size=None,
     URL = "https://docs.google.com/uc?export=download"
     session = requests.Session()    
 
-    response = session.get(URL, params = { 'id' : id_ }, stream = True)
+    response = session.get(URL, params={ 'id' : id_ }, stream=True)
     token = get_confirm_token(response)
 
     if token:
         params = { 'id' : id_, 'confirm' : token }
-        response = session.get(URL, params = params, stream = True)
+        response = session.get(URL, params=params, stream=True)
 
-    save_response_content(response, destination, size=size,
+    save_response_content(response, filename, size=size,
                           chnksz=chnksz)
     response.close()
     if zip:
-        extract_file(destination)
+        extract_file(filename)
     return
