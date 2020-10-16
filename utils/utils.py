@@ -24,6 +24,14 @@ def read_listdir(dir_):
         full_dirs.append(full_dir)
     return np.sort(full_dirs)
 
+def extract_file(filename):
+    with zipfile.ZipFile(filename) as zfile:
+        print("\nExtrayedo Zip File...")
+        zfile.extractall()
+        print("Eliminando Zip File...")
+        os.remove(filename)
+    return
+
 """
 Miscellaneous Functions
 """
@@ -35,24 +43,51 @@ def download_content(url, filename, chnksz=1000, zip=False):
         sys.exit()
         
     with open(filename, "wb") as f:
-        
         try:
             total = int(np.ceil(int(r.headers.get("content-length"))/chnksz))
         except:
             total = 0
-
         gen = r.iter_content(chunk_size=chnksz)
 
         for pkg in tqdm(gen, total=total, unit="KB"):
             f.write(pkg)
-
         f.close()
         r.close()
     
     if zip:
-        with zipfile.ZipFile(filename, "r") as zfile:
-            print("\nExtrayedo Zip File...")
-            zfile.extractall()
-            print("Eliminando Zip File...")
-            os.remove(filename)
+        extract_file(filename)
+    return
+
+def download_file_from_google_drive(id_, destination, size=None,
+                                    chnksz=1000, zip=False):
+    def get_confirm_token(response):
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+        return None
+
+    def save_response_content(response, destination, size=None,
+                              chnksz=1000):
+        with open(destination, "wb") as f:
+            gen = response.iter_content(chunk_size=chnksz)
+            for chunk in tqdm(gen, total=size, unit="KB"):
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+            f.close()
+
+    URL = "https://docs.google.com/uc?export=download"
+    session = requests.Session()    
+
+    response = session.get(URL, params = { 'id' : id_ }, stream = True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = { 'id' : id_, 'confirm' : token }
+        response = session.get(URL, params = params, stream = True)
+
+    save_response_content(response, destination, size=size,
+                          chnksz=chnksz)
+    response.close()
+    if zip:
+        extract_file(destination)
     return
