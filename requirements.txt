@@ -5,3 +5,5 @@ pandas_profiling
 requests
 scikit-learn
 ipykernel
+requests
+tqdm
