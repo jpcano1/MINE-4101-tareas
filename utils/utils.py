@@ -18,7 +18,7 @@ def create_and_verify(*args):
 
 def read_listdir(dir_):
     listdir = os.listdir(dir_)
-    full_dirs = list()
+    full_dirs = []
     for d in listdir:
         full_dir = create_and_verify(dir_, d)
         full_dirs.append(full_dir)
@@ -45,7 +45,7 @@ def download_content(url, filename, chnksz=1000, zip=False):
 
         for pkg in tqdm(gen, total=total, unit="KB"):
             f.write(pkg)
-            
+
         f.close()
         r.close()
     
